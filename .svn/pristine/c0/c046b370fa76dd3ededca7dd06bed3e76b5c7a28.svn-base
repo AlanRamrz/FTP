@@ -1,0 +1,95 @@
+package com.ftp.commons;
+
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
+
+public class FTPUtils {
+
+	public static FTPFile[] readFTP(String address, String user, String password) {
+		System.out.println("Leyendo el FTP");
+		
+		FTPClient client = new FTPClient();
+		FTPFile[] files = new FTPFile[0];
+
+		try {
+			client.connect(address);
+			boolean conectar = client.login(user, password);
+			
+			if(conectar) {
+				System.out.println("Conectado!!!");
+			}
+			
+			boolean cambio = client.changeWorkingDirectory("hrratings");
+			
+			if(cambio) {
+				System.out.println("Cambio!");
+			}
+
+			files = client.listFiles();
+
+			client.logout();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("Terminando de leer FTP");
+		
+		System.out.println("El numero de archivos es: "+files.length);
+		
+		return files;
+		
+		
+	}
+
+	public static List<FTPFile> filterByDate(FTPFile[] files, Date date) {
+		System.out.println("Filtrando los archivos");
+		
+		List<FTPFile> res = new ArrayList<>();
+
+		for (FTPFile item : files) {
+
+			if (date2String(date, "d-MMM-yyyy").equals(date2String(item.getTimestamp().getTime(), "d-MMM-yyyy"))) {
+				res.add(item);
+				System.out.println("AGREGADO");
+			}
+		}
+
+		System.out.println("Terminanado de filtrar archivos");
+		
+		return res;
+	}
+
+	private static String date2String(Date date, String pattern) {
+		DateFormat df = new SimpleDateFormat(pattern);
+		return df.format(date);
+	}
+
+	public static void downloadFile(String address, String user, String password, String nombre) {
+		System.out.println("Empezando a descargar el archivo " + nombre);
+		FTPClient client = new FTPClient();
+
+		try {
+			client.connect(address);
+			client.login(user, password);
+			client.changeWorkingDirectory("hrratings");
+
+			OutputStream out = new FileOutputStream("/home/despinosa/FTPFiles/Files/" + nombre);
+			//OutputStream out = new FileOutputStream("/Users/alanramirez/Documents/FTPFiles/" + nombre);
+
+			client.retrieveFile(nombre, out);
+
+			out.close();
+			client.logout();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
